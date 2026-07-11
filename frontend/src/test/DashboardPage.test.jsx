@@ -373,4 +373,277 @@ describe('DashboardPage Vehicle CRUD & Role Access (TDD)', () => {
       expect(screen.getByText(/Porsche 911 Turbo S/i)).toBeInTheDocument()
     })
   })
+
+  it('filters vehicles in real-time by search query', async () => {
+    const mockVehicles = [
+      {
+        id: 1,
+        vin: 'VIN1',
+        make: 'Porsche',
+        model: '911',
+        year: 2023,
+        price: 120000.0,
+        category: 'Sports',
+        quantity: 2,
+      },
+      {
+        id: 2,
+        vin: 'VIN2',
+        make: 'Ferrari',
+        model: 'Roma',
+        year: 2022,
+        price: 240000.0,
+        category: 'Supercar',
+        quantity: 1,
+      }
+    ]
+    vehicleApi.getAll.mockResolvedValueOnce({ data: mockVehicles })
+
+    localStorage.setItem('user', JSON.stringify({ name: 'Client User', role: 'USER', email: 'client@velodrive.com' }))
+    localStorage.setItem('token', 'mock-user-token')
+
+    render(
+      <MemoryRouter>
+        <AuthProvider>
+          <DashboardPage />
+        </AuthProvider>
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText(/Porsche 911/i)).toBeInTheDocument()
+      expect(screen.getByText(/Ferrari Roma/i)).toBeInTheDocument()
+    })
+
+    // Type 'Ferrari' in search input
+    const searchInput = screen.getByPlaceholderText(/Search by make, model, category, or VIN/i)
+    fireEvent.change(searchInput, { target: { value: 'Ferrari' } })
+
+    // Only Ferrari should remain
+    expect(screen.getByText(/Ferrari Roma/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Porsche 911/i)).not.toBeInTheDocument()
+  })
+
+  it('filters vehicles by maximum price on apply click', async () => {
+    const mockVehicles = [
+      {
+        id: 1,
+        vin: 'VIN1',
+        make: 'Porsche',
+        model: '911',
+        year: 2023,
+        price: 120000.0,
+        category: 'Sports',
+        quantity: 2,
+      },
+      {
+        id: 2,
+        vin: 'VIN2',
+        make: 'Ferrari',
+        model: 'Roma',
+        year: 2022,
+        price: 240000.0,
+        category: 'Supercar',
+        quantity: 1,
+      }
+    ]
+    vehicleApi.getAll.mockResolvedValueOnce({ data: mockVehicles })
+
+    localStorage.setItem('user', JSON.stringify({ name: 'Client User', role: 'USER', email: 'client@velodrive.com' }))
+    localStorage.setItem('token', 'mock-user-token')
+
+    render(
+      <MemoryRouter>
+        <AuthProvider>
+          <DashboardPage />
+        </AuthProvider>
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText(/Porsche 911/i)).toBeInTheDocument()
+      expect(screen.getByText(/Ferrari Roma/i)).toBeInTheDocument()
+    })
+
+    // Type '150000' in max price input
+    const priceInput = screen.getByPlaceholderText(/Max Price/i)
+    fireEvent.change(priceInput, { target: { value: '150000' } })
+
+    // Ferrari (240k) should still be visible because price filter is not applied yet
+    expect(screen.getByText(/Ferrari Roma/i)).toBeInTheDocument()
+
+    // Click apply button
+    const applyBtn = screen.getByTitle(/Apply price filter/i)
+    fireEvent.click(applyBtn)
+
+    // Only Porsche (120k) should remain, Ferrari (240k) should be hidden
+    await waitFor(() => {
+      expect(screen.queryByText(/Ferrari Roma/i)).not.toBeInTheDocument()
+      expect(screen.getByText(/Porsche 911/i)).toBeInTheDocument()
+    })
+  })
+
+  it('filters vehicles by minimum price on apply click', async () => {
+    const mockVehicles = [
+      {
+        id: 1,
+        vin: 'VIN1',
+        make: 'Porsche',
+        model: '911',
+        year: 2023,
+        price: 120000.0,
+        category: 'Sports',
+        quantity: 2,
+      },
+      {
+        id: 2,
+        vin: 'VIN2',
+        make: 'Ferrari',
+        model: 'Roma',
+        year: 2022,
+        price: 240000.0,
+        category: 'Supercar',
+        quantity: 1,
+      }
+    ]
+    vehicleApi.getAll.mockResolvedValueOnce({ data: mockVehicles })
+
+    localStorage.setItem('user', JSON.stringify({ name: 'Client User', role: 'USER', email: 'client@velodrive.com' }))
+    localStorage.setItem('token', 'mock-user-token')
+
+    render(
+      <MemoryRouter>
+        <AuthProvider>
+          <DashboardPage />
+        </AuthProvider>
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText(/Porsche 911/i)).toBeInTheDocument()
+      expect(screen.getByText(/Ferrari Roma/i)).toBeInTheDocument()
+    })
+
+    // Type '150000' in min price input
+    const minPriceInput = screen.getByPlaceholderText(/Min Price/i)
+    fireEvent.change(minPriceInput, { target: { value: '150000' } })
+
+    // Click apply button
+    const applyBtn = screen.getByTitle(/Apply price filter/i)
+    fireEvent.click(applyBtn)
+
+    // Only Ferrari (240k) should remain, Porsche (120k) should be hidden
+    await waitFor(() => {
+      expect(screen.queryByText(/Porsche 911/i)).not.toBeInTheDocument()
+      expect(screen.getByText(/Ferrari Roma/i)).toBeInTheDocument()
+    })
+  })
+
+  it('sorts vehicles by price and year', async () => {
+    const mockVehicles = [
+      {
+        id: 1,
+        vin: 'VIN1',
+        make: 'Porsche',
+        model: '911',
+        year: 2023,
+        price: 120000.0,
+        category: 'Sports',
+        quantity: 2,
+      },
+      {
+        id: 2,
+        vin: 'VIN2',
+        make: 'Ferrari',
+        model: 'Roma',
+        year: 2022,
+        price: 240000.0,
+        category: 'Supercar',
+        quantity: 1,
+      }
+    ]
+    vehicleApi.getAll.mockResolvedValueOnce({ data: mockVehicles })
+
+    localStorage.setItem('user', JSON.stringify({ name: 'Client User', role: 'USER', email: 'client@velodrive.com' }))
+    localStorage.setItem('token', 'mock-user-token')
+
+    render(
+      <MemoryRouter>
+        <AuthProvider>
+          <DashboardPage />
+        </AuthProvider>
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText(/Porsche 911/i)).toBeInTheDocument()
+    })
+
+    // Find the Sort select dropdown
+    const sortSelect = screen.getByRole('combobox')
+    expect(sortSelect).toBeInTheDocument()
+
+    // Select Price: High to Low
+    fireEvent.change(sortSelect, { target: { value: 'price-desc' } })
+    
+    // Check that Ferrari is rendered before Porsche in the DOM
+    const cards = screen.getAllByClassName('fleet-card')
+    expect(cards[0]).toHaveTextContent(/Ferrari Roma/i)
+    expect(cards[1]).toHaveTextContent(/Porsche 911/i)
+  })
+
+  it('resets all filters when clicking the Reset button', async () => {
+    const mockVehicles = [
+      {
+        id: 1,
+        vin: 'VIN1',
+        make: 'Porsche',
+        model: '911',
+        year: 2023,
+        price: 120000.0,
+        category: 'Sports',
+        quantity: 2,
+      }
+    ]
+    vehicleApi.getAll.mockResolvedValueOnce({ data: mockVehicles })
+
+    localStorage.setItem('user', JSON.stringify({ name: 'Client User', role: 'USER', email: 'client@velodrive.com' }))
+    localStorage.setItem('token', 'mock-user-token')
+
+    render(
+      <MemoryRouter>
+        <AuthProvider>
+          <DashboardPage />
+        </AuthProvider>
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText(/Porsche 911/i)).toBeInTheDocument()
+    })
+
+    // Type query and price limits
+    fireEvent.change(screen.getByPlaceholderText(/Search by make/i), { target: { value: 'Lamborghini' } })
+    fireEvent.change(screen.getByPlaceholderText(/Min Price/i), { target: { value: '50000' } })
+    fireEvent.change(screen.getByPlaceholderText(/Max Price/i), { target: { value: '150000' } })
+    
+    // Apply prices
+    fireEvent.click(screen.getByTitle(/Apply price filter/i))
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'price-asc' } })
+
+    // Verify it is filtered out (no results)
+    expect(screen.queryByText(/Porsche 911/i)).not.toBeInTheDocument()
+
+    // Click Reset
+    const resetBtn = screen.getByRole('button', { name: /Reset/i })
+    fireEvent.click(resetBtn)
+
+    // Verify Porsche 911 is back
+    expect(screen.getByText(/Porsche 911/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/Search by make/i).value).toBe('')
+    expect(screen.getByPlaceholderText(/Min Price/i).value).toBe('')
+    expect(screen.getByPlaceholderText(/Max Price/i).value).toBe('')
+    expect(screen.getByRole('combobox').value).toBe('default')
+  })
 })

@@ -26,6 +26,12 @@ export default function DashboardPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [notifications, setNotifications] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [minPriceInput, setMinPriceInput] = useState('')
+  const [maxPriceInput, setMaxPriceInput] = useState('')
+  const [appliedMinPrice, setAppliedMinPrice] = useState('')
+  const [appliedMaxPrice, setAppliedMaxPrice] = useState('')
+  const [sortBy, setSortBy] = useState('default')
 
   const showNotification = (message, type = 'success') => {
     const id = Date.now() + Math.random()
@@ -211,6 +217,32 @@ export default function DashboardPage() {
     }
   }
 
+  const filteredVehicles = vehicles.filter((v) => {
+    const query = searchQuery.toLowerCase().trim()
+    const matchesSearch =
+      !query ||
+      v.make.toLowerCase().includes(query) ||
+      v.model.toLowerCase().includes(query) ||
+      v.vin.toLowerCase().includes(query) ||
+      v.category.toLowerCase().includes(query)
+
+    const parsedMinPrice = parseFloat(appliedMinPrice)
+    const matchesMinPrice = isNaN(parsedMinPrice) || v.price >= parsedMinPrice
+
+    const parsedMaxPrice = parseFloat(appliedMaxPrice)
+    const matchesMaxPrice = isNaN(parsedMaxPrice) || v.price <= parsedMaxPrice
+
+    return matchesSearch && matchesMinPrice && matchesMaxPrice
+  })
+
+  const sortedVehicles = [...filteredVehicles].sort((a, b) => {
+    if (sortBy === 'price-asc') return a.price - b.price
+    if (sortBy === 'price-desc') return b.price - a.price
+    if (sortBy === 'year-desc') return b.year - a.year
+    if (sortBy === 'year-asc') return a.year - b.year
+    return 0
+  })
+
   const isAdmin = user?.role === 'ADMIN'
 
   return (
@@ -284,6 +316,95 @@ export default function DashboardPage() {
         <div className="fleet-section">
           <h2 className="fleet-title">Available Luxury Inventory</h2>
 
+          {vehicles.length > 0 && (
+            <div className="fleet-filters-bar">
+              <div className="search-input-wrapper">
+                <svg className="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search by make, model, category, or VIN..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="filter-search-input"
+                />
+              </div>
+              <div className="filters-controls-group">
+                <div className="price-inputs-row">
+                  <input
+                    type="number"
+                    placeholder="Min Price"
+                    value={minPriceInput}
+                    onChange={(e) => setMinPriceInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        setAppliedMinPrice(minPriceInput)
+                        setAppliedMaxPrice(maxPriceInput)
+                      }
+                    }}
+                    className="filter-price-input"
+                  />
+                  <span className="price-dash">—</span>
+                  <input
+                    type="number"
+                    placeholder="Max Price"
+                    value={maxPriceInput}
+                    onChange={(e) => setMaxPriceInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        setAppliedMinPrice(minPriceInput)
+                        setAppliedMaxPrice(maxPriceInput)
+                      }
+                    }}
+                    className="filter-price-input"
+                  />
+                  <button 
+                    type="button" 
+                    className="btn-apply-price" 
+                    title="Apply price filter"
+                    onClick={() => {
+                      setAppliedMinPrice(minPriceInput)
+                      setAppliedMaxPrice(maxPriceInput)
+                    }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="sort-wrapper">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="filter-sort-select"
+                  >
+                    <option value="default">Sort: Default</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                    <option value="year-desc">Year: Newest First</option>
+                    <option value="year-asc">Year: Oldest First</option>
+                  </select>
+                </div>
+                <button
+                  className="btn-filter-reset"
+                  onClick={() => {
+                    setSearchQuery('')
+                    setMinPriceInput('')
+                    setMaxPriceInput('')
+                    setAppliedMinPrice('')
+                    setAppliedMaxPrice('')
+                    setSortBy('default')
+                  }}
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+          )}
+
           {loading ? (
             <div className="fleet-loading">Calibrating telemetry systems...</div>
           ) : vehicles.length === 0 ? (
@@ -291,9 +412,38 @@ export default function DashboardPage() {
               <p>No high-performance vehicles in the database catalog.</p>
               {isAdmin && <p style={{ fontSize: '14px', color: '#dfba73', marginTop: '8px' }}>Use the "Add Vehicle" system above to catalog the first supercar.</p>}
             </div>
+          ) : filteredVehicles.length === 0 ? (
+            <div className="fleet-empty-state">
+              <p>No vehicles match your search query or price limits.</p>
+              <button 
+                className="btn-clear-filters" 
+                onClick={() => {
+                  setSearchQuery('')
+                  setMinPriceInput('')
+                  setMaxPriceInput('')
+                  setAppliedMinPrice('')
+                  setAppliedMaxPrice('')
+                  setSortBy('default')
+                }}
+                style={{
+                  marginTop: '12px',
+                  backgroundColor: 'transparent',
+                  border: '1px solid var(--accent-gold)',
+                  color: 'var(--accent-gold)',
+                  padding: '8px 16px',
+                  borderRadius: 'var(--radius-sm)',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  transition: 'var(--transition)'
+                }}
+              >
+                Clear Filters
+              </button>
+            </div>
           ) : (
             <div className="fleet-grid">
-              {vehicles.map((v) => (
+              {sortedVehicles.map((v) => (
                 <div className="fleet-card" key={v.id}>
                   <div className="fleet-card-img-container">
                     {v.imageUrl ? (
