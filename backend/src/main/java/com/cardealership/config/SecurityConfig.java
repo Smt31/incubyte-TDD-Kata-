@@ -32,10 +32,10 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/vehicles/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/vehicles/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/vehicles/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/vehicles/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/vehicles", "/api/vehicles/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/vehicles", "/api/vehicles/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/vehicles", "/api/vehicles/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/vehicles", "/api/vehicles/**").authenticated()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(exception -> exception

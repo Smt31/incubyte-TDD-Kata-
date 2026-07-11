@@ -28,6 +28,7 @@ describe('DashboardPage Vehicle CRUD & Role Access (TDD)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
+    vi.spyOn(window, 'confirm').mockImplementation(() => true)
   })
 
   it('renders a grid of fetched luxury vehicles for authenticated users', async () => {
@@ -95,7 +96,7 @@ describe('DashboardPage Vehicle CRUD & Role Access (TDD)', () => {
     fireEvent.click(addBtn)
 
     // Fill form
-    fireEvent.change(screen.getByPlaceholderText(/VIN \(17 characters\)/i), { target: { value: '1HGCR2F83JA111111' } })
+    fireEvent.change(screen.getByPlaceholderText(/VIN/i), { target: { value: '1HGCR2F83JA111111' } })
     fireEvent.change(screen.getByPlaceholderText(/Make/i), { target: { value: 'Lamborghini' } })
     fireEvent.change(screen.getByPlaceholderText(/Model/i), { target: { value: 'Aventador' } })
     fireEvent.change(screen.getByPlaceholderText(/Year/i), { target: { value: '2022' } })
