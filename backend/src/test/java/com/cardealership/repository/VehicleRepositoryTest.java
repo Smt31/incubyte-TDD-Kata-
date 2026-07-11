@@ -24,6 +24,8 @@ public class VehicleRepositoryTest {
                 .year(2023)
                 .price(180000.0)
                 .description("Luxury vehicle")
+                .category("Luxury")
+                .quantity(5)
                 .build();
 
         Vehicle saved = vehicleRepository.save(vehicle);

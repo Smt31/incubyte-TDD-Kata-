@@ -34,4 +34,11 @@ public class VehicleRequest {
     private String description;
 
     private String imageUrl;
+
+    @NotBlank(message = "Category is required")
+    private String category;
+
+    @NotNull(message = "Quantity is required")
+    @Min(value = 0, message = "Quantity cannot be negative")
+    private Integer quantity;
 }

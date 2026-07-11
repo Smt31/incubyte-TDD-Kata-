@@ -1,5 +1,6 @@
 package com.cardealership.controller;
 
+import com.cardealership.dto.RestockRequest;
 import com.cardealership.dto.VehicleRequest;
 import com.cardealership.model.User;
 import com.cardealership.model.Vehicle;
@@ -86,6 +87,8 @@ public class VehicleControllerTest {
                 .price(225000.0)
                 .description("VeloDrive Luxury Collection Entry")
                 .imageUrl("https://images.unsplash.com/photo-1503376780353-7e6692767b70")
+                .category("Luxury")
+                .quantity(5)
                 .build();
 
         mockMvc.perform(post("/api/vehicles")
@@ -106,6 +109,8 @@ public class VehicleControllerTest {
                 .model("911 GT3 RS")
                 .year(2023)
                 .price(225000.0)
+                .category("Luxury")
+                .quantity(5)
                 .build();
 
         mockMvc.perform(post("/api/vehicles")
@@ -123,6 +128,8 @@ public class VehicleControllerTest {
                 .model("911 GT3 RS")
                 .year(2023)
                 .price(225000.0)
+                .category("Luxury")
+                .quantity(5)
                 .build();
 
         mockMvc.perform(post("/api/vehicles")
@@ -161,6 +168,8 @@ public class VehicleControllerTest {
                 .model("911 GT3 RS")
                 .year(2023)
                 .price(225000.0)
+                .category("Luxury")
+                .quantity(5)
                 .build();
         vehicleRepository.save(vehicle1);
 
@@ -179,6 +188,8 @@ public class VehicleControllerTest {
                 .model("911")
                 .year(2023)
                 .price(120000.0)
+                .category("Luxury")
+                .quantity(5)
                 .build();
         Vehicle savedVehicle = vehicleRepository.save(vehicle);
 
@@ -203,6 +214,8 @@ public class VehicleControllerTest {
                 .model("911")
                 .year(2023)
                 .price(120000.0)
+                .category("Luxury")
+                .quantity(5)
                 .build();
         Vehicle savedVehicle = vehicleRepository.save(vehicle);
 
@@ -212,6 +225,8 @@ public class VehicleControllerTest {
                 .model("911 Carrera")
                 .year(2024)
                 .price(130000.0)
+                .category("Luxury")
+                .quantity(5)
                 .build();
 
         mockMvc.perform(put("/api/vehicles/" + savedVehicle.getId())
@@ -230,6 +245,8 @@ public class VehicleControllerTest {
                 .model("911")
                 .year(2023)
                 .price(120000.0)
+                .category("Luxury")
+                .quantity(5)
                 .build();
         Vehicle savedVehicle = vehicleRepository.save(vehicle);
 
@@ -239,6 +256,8 @@ public class VehicleControllerTest {
                 .model("911 Carrera")
                 .year(2024)
                 .price(130000.0)
+                .category("Luxury")
+                .quantity(5)
                 .build();
 
         mockMvc.perform(put("/api/vehicles/" + savedVehicle.getId())
@@ -256,6 +275,8 @@ public class VehicleControllerTest {
                 .model("911")
                 .year(2023)
                 .price(120000.0)
+                .category("Luxury")
+                .quantity(5)
                 .build();
         Vehicle savedVehicle = vehicleRepository.save(vehicle);
 
@@ -274,6 +295,8 @@ public class VehicleControllerTest {
                 .model("911")
                 .year(2023)
                 .price(120000.0)
+                .category("Luxury")
+                .quantity(5)
                 .build();
         Vehicle savedVehicle = vehicleRepository.save(vehicle);
 
@@ -282,5 +305,109 @@ public class VehicleControllerTest {
                 .andExpect(status().isForbidden());
 
         assertTrue(vehicleRepository.existsById(savedVehicle.getId()));
+    }
+
+    @Test
+    void shouldDecreaseQuantityOnPurchase() throws Exception {
+        Vehicle vehicle = Vehicle.builder()
+                .vin("1HGCR2F83JA123457")
+                .make("Porsche")
+                .model("911")
+                .year(2023)
+                .price(120000.0)
+                .category("Luxury")
+                .quantity(5)
+                .build();
+        Vehicle savedVehicle = vehicleRepository.save(vehicle);
+
+        mockMvc.perform(post("/api/vehicles/" + savedVehicle.getId() + "/purchase")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.quantity").value(4));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenOutOfStock() throws Exception {
+        Vehicle vehicle = Vehicle.builder()
+                .vin("1HGCR2F83JA123458")
+                .make("Porsche")
+                .model("911")
+                .year(2023)
+                .price(120000.0)
+                .category("Luxury")
+                .quantity(0)
+                .build();
+        Vehicle savedVehicle = vehicleRepository.save(vehicle);
+
+        mockMvc.perform(post("/api/vehicles/" + savedVehicle.getId() + "/purchase")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userToken))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldIncreaseQuantityOnRestock() throws Exception {
+        Vehicle vehicle = Vehicle.builder()
+                .vin("1HGCR2F83JA123459")
+                .make("Porsche")
+                .model("911")
+                .year(2023)
+                .price(120000.0)
+                .category("Luxury")
+                .quantity(5)
+                .build();
+        Vehicle savedVehicle = vehicleRepository.save(vehicle);
+
+        RestockRequest restockRequest = RestockRequest.builder().quantity(10).build();
+
+        mockMvc.perform(post("/api/vehicles/" + savedVehicle.getId() + "/restock")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(restockRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.quantity").value(15));
+    }
+
+    @Test
+    void shouldRejectInvalidRestockQuantity() throws Exception {
+        Vehicle vehicle = Vehicle.builder()
+                .vin("1HGCR2F83JA123460")
+                .make("Porsche")
+                .model("911")
+                .year(2023)
+                .price(120000.0)
+                .category("Luxury")
+                .quantity(5)
+                .build();
+        Vehicle savedVehicle = vehicleRepository.save(vehicle);
+
+        RestockRequest restockRequest = RestockRequest.builder().quantity(0).build();
+
+        mockMvc.perform(post("/api/vehicles/" + savedVehicle.getId() + "/restock")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(restockRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturn403ForNonAdminRestock() throws Exception {
+        Vehicle vehicle = Vehicle.builder()
+                .vin("1HGCR2F83JA123461")
+                .make("Porsche")
+                .model("911")
+                .year(2023)
+                .price(120000.0)
+                .category("Luxury")
+                .quantity(5)
+                .build();
+        Vehicle savedVehicle = vehicleRepository.save(vehicle);
+
+        RestockRequest restockRequest = RestockRequest.builder().quantity(10).build();
+
+        mockMvc.perform(post("/api/vehicles/" + savedVehicle.getId() + "/restock")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(restockRequest)))
+                .andExpect(status().isForbidden());
     }
 }

@@ -37,4 +37,10 @@ public class Vehicle {
     private String description;
 
     private String imageUrl;
+
+    @Column(nullable = false)
+    private String category;
+
+    @Column(nullable = false)
+    private Integer quantity;
 }

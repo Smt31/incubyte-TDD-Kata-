@@ -18,4 +18,6 @@ public class VehicleResponse {
     private Double price;
     private String description;
     private String imageUrl;
+    private String category;
+    private Integer quantity;
 }

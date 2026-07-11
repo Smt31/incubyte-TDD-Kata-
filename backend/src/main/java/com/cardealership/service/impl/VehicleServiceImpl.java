@@ -33,6 +33,8 @@ public class VehicleServiceImpl implements VehicleService {
                 .price(request.getPrice())
                 .description(request.getDescription())
                 .imageUrl(request.getImageUrl())
+                .category(request.getCategory())
+                .quantity(request.getQuantity())
                 .build();
 
         Vehicle saved = vehicleRepository.save(vehicle);
@@ -70,6 +72,8 @@ public class VehicleServiceImpl implements VehicleService {
         vehicle.setPrice(request.getPrice());
         vehicle.setDescription(request.getDescription());
         vehicle.setImageUrl(request.getImageUrl());
+        vehicle.setCategory(request.getCategory());
+        vehicle.setQuantity(request.getQuantity());
 
         Vehicle updated = vehicleRepository.save(vehicle);
         return mapToResponse(updated);
@@ -92,6 +96,8 @@ public class VehicleServiceImpl implements VehicleService {
                 .price(vehicle.getPrice())
                 .description(vehicle.getDescription())
                 .imageUrl(vehicle.getImageUrl())
+                .category(vehicle.getCategory())
+                .quantity(vehicle.getQuantity())
                 .build();
     }
 }
