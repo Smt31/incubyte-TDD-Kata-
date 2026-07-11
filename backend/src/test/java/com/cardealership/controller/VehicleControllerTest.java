@@ -134,7 +134,7 @@ public class VehicleControllerTest {
     @Test
     void shouldRejectCreateVehicleWithInvalidData() throws Exception {
         VehicleRequest request = VehicleRequest.builder()
-                .vin("SHORT")
+                .vin("123")
                 .make("")
                 .model("")
                 .year(1800)

@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class VehicleRequest {
 
     @NotBlank(message = "VIN is required")
-    @Size(min = 17, max = 17, message = "VIN must be exactly 17 characters long")
+    @Size(min = 4, max = 30, message = "VIN must be between 4 and 30 characters long")
     private String vin;
 
     @NotBlank(message = "Make is required")
