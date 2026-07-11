@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     /**
-     * Handles business logic validation errors like duplicate email.
+     * Handles duplicate email registration errors.
      */
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<Map<String, String>> handleEmailAlreadyExistsException(EmailAlreadyExistsException ex) {
@@ -29,8 +29,18 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles Spring Boot JSR-380 validation field errors (e.g. @NotBlank, @Email).
-     * Refactored using Java Stream API for functional mapping of validation errors.
+     * Handles invalid login credentials with 401 Unauthorized.
+     * Generic message prevents user enumeration attacks.
+     */
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidCredentialsException(InvalidCredentialsException ex) {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * Handles JSR-380 field validation errors (@NotBlank, @Email, @Size).
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
@@ -44,13 +54,13 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles empty request body and malformed JSON errors.
+     * Handles empty request body and malformed JSON.
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Map<String, String>> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
         Map<String, String> response = new HashMap<>();
-        String rootCauseMessage = ex.getMessage();
-        if (rootCauseMessage != null && rootCauseMessage.contains("Required request body is missing")) {
+        String message = ex.getMessage();
+        if (message != null && message.contains("Required request body is missing")) {
             response.put("error", "Request body is missing or empty");
         } else {
             response.put("error", "Malformed JSON request");
