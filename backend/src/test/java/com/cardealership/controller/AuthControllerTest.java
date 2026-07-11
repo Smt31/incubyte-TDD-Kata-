@@ -1,5 +1,6 @@
 package com.cardealership.controller;
 
+import com.cardealership.dto.RegisterRequest;
 import com.cardealership.model.User;
 import com.cardealership.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,21 +9,21 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * Integration tests for AuthController endpoints following strict TDD.
+ * Refactored to use type-safe RegisterRequest DTO builders for mock request payloads.
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -47,10 +48,11 @@ public class AuthControllerTest {
 
     @Test
     void shouldRegisterUserWithValidData() throws Exception {
-        Map<String, String> request = new HashMap<>();
-        request.put("email", "valid@example.com");
-        request.put("password", "password123");
-        request.put("name", "Valid User");
+        RegisterRequest request = RegisterRequest.builder()
+                .email("valid@example.com")
+                .password("password123")
+                .name("Valid User")
+                .build();
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -63,7 +65,7 @@ public class AuthControllerTest {
 
     @Test
     void shouldRejectDuplicateEmail() throws Exception {
-        // Save initial user
+        // Pre-save existing user
         User existingUser = User.builder()
                 .email("duplicate@example.com")
                 .password(passwordEncoder.encode("password123"))
@@ -72,10 +74,11 @@ public class AuthControllerTest {
                 .build();
         userRepository.save(existingUser);
 
-        Map<String, String> request = new HashMap<>();
-        request.put("email", "duplicate@example.com");
-        request.put("password", "password123");
-        request.put("name", "New User");
+        RegisterRequest request = RegisterRequest.builder()
+                .email("duplicate@example.com")
+                .password("password123")
+                .name("New User")
+                .build();
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -86,10 +89,11 @@ public class AuthControllerTest {
 
     @Test
     void shouldRejectBlankEmail() throws Exception {
-        Map<String, String> request = new HashMap<>();
-        request.put("email", " ");
-        request.put("password", "password123");
-        request.put("name", "Name");
+        RegisterRequest request = RegisterRequest.builder()
+                .email(" ")
+                .password("password123")
+                .name("Name")
+                .build();
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -100,10 +104,11 @@ public class AuthControllerTest {
 
     @Test
     void shouldRejectInvalidEmailFormat() throws Exception {
-        Map<String, String> request = new HashMap<>();
-        request.put("email", "invalid-email");
-        request.put("password", "password123");
-        request.put("name", "Name");
+        RegisterRequest request = RegisterRequest.builder()
+                .email("invalid-email")
+                .password("password123")
+                .name("Name")
+                .build();
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -114,10 +119,11 @@ public class AuthControllerTest {
 
     @Test
     void shouldRejectBlankPassword() throws Exception {
-        Map<String, String> request = new HashMap<>();
-        request.put("email", "valid@example.com");
-        request.put("password", " ");
-        request.put("name", "Name");
+        RegisterRequest request = RegisterRequest.builder()
+                .email("valid@example.com")
+                .password(" ")
+                .name("Name")
+                .build();
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -128,10 +134,11 @@ public class AuthControllerTest {
 
     @Test
     void shouldRejectShortPassword() throws Exception {
-        Map<String, String> request = new HashMap<>();
-        request.put("email", "valid@example.com");
-        request.put("password", "12345"); // Short password (less than 6 chars)
-        request.put("name", "Name");
+        RegisterRequest request = RegisterRequest.builder()
+                .email("valid@example.com")
+                .password("12345") // Less than 6 characters
+                .name("Name")
+                .build();
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -142,10 +149,11 @@ public class AuthControllerTest {
 
     @Test
     void shouldRejectBlankName() throws Exception {
-        Map<String, String> request = new HashMap<>();
-        request.put("email", "valid@example.com");
-        request.put("password", "password123");
-        request.put("name", " ");
+        RegisterRequest request = RegisterRequest.builder()
+                .email("valid@example.com")
+                .password("password123")
+                .name(" ")
+                .build();
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -156,10 +164,11 @@ public class AuthControllerTest {
 
     @Test
     void shouldAssignDefaultUSERRole() throws Exception {
-        Map<String, String> request = new HashMap<>();
-        request.put("email", "role@example.com");
-        request.put("password", "password123");
-        request.put("name", "Role User");
+        RegisterRequest request = RegisterRequest.builder()
+                .email("role@example.com")
+                .password("password123")
+                .name("Role User")
+                .build();
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -170,10 +179,11 @@ public class AuthControllerTest {
 
     @Test
     void shouldHashPasswordBeforeSaving() throws Exception {
-        Map<String, String> request = new HashMap<>();
-        request.put("email", "hash@example.com");
-        request.put("password", "myPlainPassword123");
-        request.put("name", "Hash User");
+        RegisterRequest request = RegisterRequest.builder()
+                .email("hash@example.com")
+                .password("myPlainPassword123")
+                .name("Hash User")
+                .build();
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -190,10 +200,11 @@ public class AuthControllerTest {
 
     @Test
     void shouldNotReturnPasswordInResponse() throws Exception {
-        Map<String, String> request = new HashMap<>();
-        request.put("email", "nopass@example.com");
-        request.put("password", "password123");
-        request.put("name", "No Pass User");
+        RegisterRequest request = RegisterRequest.builder()
+                .email("nopass@example.com")
+                .password("password123")
+                .name("No Pass User")
+                .build();
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -204,10 +215,11 @@ public class AuthControllerTest {
 
     @Test
     void shouldSaveUserInDatabase() throws Exception {
-        Map<String, String> request = new HashMap<>();
-        request.put("email", "db@example.com");
-        request.put("password", "password123");
-        request.put("name", "DB User");
+        RegisterRequest request = RegisterRequest.builder()
+                .email("db@example.com")
+                .password("password123")
+                .name("DB User")
+                .build();
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -239,10 +251,11 @@ public class AuthControllerTest {
 
     @Test
     void shouldReturnValidationErrorsForInvalidInput() throws Exception {
-        Map<String, String> request = new HashMap<>();
-        request.put("email", "bademail");
-        request.put("password", "short");
-        request.put("name", "");
+        RegisterRequest request = RegisterRequest.builder()
+                .email("bademail")
+                .password("short")
+                .name("")
+                .build();
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -255,18 +268,19 @@ public class AuthControllerTest {
 
     @Test
     void shouldReturnCorrectHttpStatusCodes() throws Exception {
-        // Test 201 Created for success
-        Map<String, String> request = new HashMap<>();
-        request.put("email", "http@example.com");
-        request.put("password", "password123");
-        request.put("name", "HTTP User");
+        RegisterRequest request = RegisterRequest.builder()
+                .email("http@example.com")
+                .password("password123")
+                .name("HTTP User")
+                .build();
 
+        // 201 Created on success
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated());
 
-        // Test 400 Bad Request for duplicate
+        // 400 Bad Request on duplicate
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

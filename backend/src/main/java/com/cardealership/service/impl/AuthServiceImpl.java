@@ -2,6 +2,7 @@ package com.cardealership.service.impl;
 
 import com.cardealership.dto.RegisterRequest;
 import com.cardealership.dto.UserResponse;
+import com.cardealership.exception.EmailAlreadyExistsException;
 import com.cardealership.model.User;
 import com.cardealership.repository.UserRepository;
 import com.cardealership.service.AuthService;
@@ -20,8 +21,9 @@ public class AuthServiceImpl implements AuthService {
     public UserResponse register(RegisterRequest request) {
         // Core requirement: check for duplicate email
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new EmailAlreadyExistsException("Email already exists");
         }
+
 
         // Core requirement: hash password and assign default role USER
         User user = User.builder()
